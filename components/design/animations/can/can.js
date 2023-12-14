@@ -1,42 +1,58 @@
-import React, { Suspense, useRef } from "react";
-import { Canvas } from "@react-three/fiber";
-import { Environment, useGLTF } from "@react-three/drei";
-import { OrbitControls } from "three/src/cameras/OrthographicCamera";
+import React, { useRef, useState, useEffect } from "react";
+import { Canvas, useFrame } from "@react-three/fiber";
+import { Environment, PerspectiveCamera, useGLTF } from "@react-three/drei";
+import { gsap } from "gsap";
 
-const Model = () => {
+const Model = ({ condition }) => {
   const gltf = useGLTF("/can.glb");
+  const modelRef = useRef();
+  const [animated, setAnimated] = useState(false);
+
+  useEffect(() => {
+    if (condition) {
+      // Set animated to true when the condition becomes true
+      setAnimated(true);
+    }
+  }, [condition]);
+
+  useFrame(({ clock, mouse }) => {
+    if (animated) {
+      // GSAP animation for smooth transition to the initial position
+      gsap.to(modelRef.current.rotation, {
+        y: -Math.PI / 1.1,
+        z: Math.PI / 3,
+        // duration: 1,
+        // ease: "power1.inOut",
+      });
+
+      gsap.to(modelRef.current.position, {
+        x: 10,
+        y: 1.2,
+        z: -1,
+        // duration: 1,
+        // ease: "power1.inOut",
+        
+      
+      });
+    }
+  });
 
   return (
     <primitive
+      ref={modelRef}
       object={gltf.scene}
-      // position={[0, 0, 0]}
-      // rotation={[0, 0, Math.PI / 4]}
+      rotation={[0, (4.1 * -Math.PI) / 5, 0]}
+      position={[0, -8, 4]}
     />
   );
 };
 
-const Can = () => {
-  const controls = useRef();
-
+const Can = ({ condition}) => {
   return (
-    <Canvas
-      camera={{
-        position: [0, 1, 5],
-      }}
-      onCreated={({ gl, camera }) => {
-        controls.current = new OrbitControls(camera, gl.domElement);
-        controls.current.enableDamping = true;
-        controls.current.dampingFactor = 0.25;
-      }}
-    >
+    <Canvas>
+      <PerspectiveCamera makeDefault fov={75} position={[0, 0, 15]} />
       <Environment preset="city" />
-
-      {/* Directional Light */}
-      {/* <directionalLight intensity={1} position={[5, 20, 10]} /> */}
-
-      <Suspense fallback={null}>
-        <Model />
-      </Suspense>
+      <Model condition={condition} />
     </Canvas>
   );
 };
