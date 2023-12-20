@@ -11,16 +11,16 @@ import {
   OrbitControls,
   PerspectiveCamera,
 } from "@react-three/drei";
+import Slider from "@/components/interface/sliders/slider";
+import { MainCanvas } from "@/components/design/animations/canvas/canvas";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export default function Home() {
+  const scrollContainerRef = useRef(null);
+
   // const
-  const style = [
-    "-z-10  top-0",
-    " z-10 -bottom-[100svh]",
-    " z-10 -bottom-[200svh]",
-  ];
+  const style = ["-z-10  top-0", " z-10 ", " z-10"];
   const position = [
     // INITIAL
     { x: 0, y: -20, z: 5 },
@@ -28,94 +28,71 @@ export default function Home() {
     { x: -40, y: 0, z: -5 },
     // REAL POSITION
     { x: 0, y: -10, z: 5 },
-    { x: 0, y: 0, z: -5 },
+    { x: 0, y: 2, z: -5 },
     { x: 10, y: 0, z: 0 },
   ];
   const rotation = [
+    { x: 0, y: 6, z: 0 },
     { x: 0, y: 0, z: 0 },
     { x: 0, y: 0, z: 0 },
-    { x: 0, y: 0, z: 0 },
-    { x: 0, y: 0, z: 0 },
+    { x: 0, y: Math.PI / 2, z: 0 },
     { x: 0, y: 0, z: 0 },
     { x: 0, y: 0, z: -Math.PI / 3 },
   ];
   const [mouse, setMouse] = useState(0);
   const [currPosition, setCurrPosition] = useState(position[0]);
   const [currRotation, setCurrRotation] = useState(rotation[0]);
-  const [prevScrollY, setPrevScrollY] = useState(0);
 
   const [display, setDisplay] = useState(false);
 
-  // FUNCTIONS
-  const handleScroll = () => {
-    const scrollY = window.scrollY;
-    const base = scrollY / window.innerHeight;
-    const scrollDirection = scrollY > prevScrollY ? "down" : "up";
-    // console.log(base, scrollDirection, scrollY , prevScrollY);
-    if (
-      (scrollDirection === "down" && base < 0.99) ||
-      (scrollDirection === "up" && base < 0.093)
-    ) {
-      setMouse(0);
-    } else if (
-      (scrollDirection === "down" && base < 1.068) ||
-      (scrollDirection === "up" && base < 1.093)
-    ) {
-      setMouse(1);
-    } else if (
-      (scrollDirection === "down" && base >= 1.9) ||
-      (scrollDirection === "up" && base >= 1.093)
-    ) {
-      setMouse(2);
-    }
-
-    // console.log('Current Section Index:', setMouse, 'Scroll Direction:', scrollDirection);
-
-    // Update the previous scroll position
-    setPrevScrollY(scrollY);
+  // FUNCTION
+  // FIRST SECTION
+  const openCanHandler = () => {
+    setCurrPosition({ x: 0, y: 0, z: -4 });
+    setCurrRotation({ x: 0, y: Math.PI / 4, z: -Math.PI / 3 });
   };
-  // USEEFFERCT
+  // SECOND SECTION
+  const rotationHandler = () => {
+    setCurrRotation({ x: 0, y: -2 * Math.PI + currRotation.y, z: 0 });
+  };
 
-  useEffect(() => {
-    window.addEventListener("scroll", handleScroll);
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, []);
+  // USEEFFECT
   useEffect(() => {
     // console.log(mouse);
     setDisplay(true);
     setCurrRotation(rotation[mouse]);
     setCurrPosition(position[mouse]);
+    // SCROLL
+    scrollContainerRef.current.scrollTo({
+      top: window.innerHeight * mouse,
+      behavior: "smooth",
+    });
     setTimeout(() => {
       setDisplay(false);
       setCurrPosition(position[mouse + 3]);
       setCurrRotation(rotation[mouse + 3]);
-    }, 1000);
-
-    // console.log("jjjj");
+    }, 900);
   }, [mouse]);
 
-  // console.log(prevScrollY);
+  // console.log(mouse);
   const language = [];
   return (
     <>
-      <main className="">
-        <div
-          className={`${display ? "hidden" : "absolute"} ${
-            style[mouse]
-          }  w-full h-full bg-red-50/0 `}
-        >
-          <Canvas>
-            <PerspectiveCamera makeDefault position={[0, 0, 25]} />
-            <Environment preset="city" />
-            {/* {mouse === 1 ? <OrbitControls enableZoom={false} /> : <></>} */}
-            <Model position={currPosition} rotation={currRotation} />
-          </Canvas>
+      <main className="h-screen overflow-hidden">
+        <Slider func={setMouse} state={mouse} />
+        <div ref={scrollContainerRef} className="overflow-hidden h-[100svh]">
+          <MainCanvas
+            // currPosition={{ x: 0, y: 0, z: 5 }}
+            // currRotation={{ x: 0, y: 1, z: 6 }}
+            currPosition={currPosition}
+            currRotation={currRotation}
+            state={display}
+            style={style}
+          />
+          <HeadSection func={openCanHandler} />
+          <MiddleSection func={rotationHandler} />
+          <LastSection />
         </div>
-        <HeadSection />
-        <MiddleSection />
-        <LastSection />
       </main>
     </>
   );
